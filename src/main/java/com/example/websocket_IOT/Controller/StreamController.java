@@ -18,7 +18,7 @@ public class StreamController {
         this.streamFrameService = streamFrameService;
     }
 
-    @PostMapping(value = "/{userId}/{deviceId}", consumes = MediaType.IMAGE_JPEG_VALUE)
+    @PostMapping(value = "/{userId}/{deviceId}/startcam", consumes = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<?> receiveFrame(
             @PathVariable String userId,
             @PathVariable String deviceId,
@@ -30,7 +30,7 @@ public class StreamController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/{userId}/{deviceId}/latest", produces = MediaType.IMAGE_JPEG_VALUE)
+    @GetMapping(value = "/stream-view/{userId}/{deviceId}", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<byte[]> getLatestFrame(
             @PathVariable String userId,
             @PathVariable String deviceId
