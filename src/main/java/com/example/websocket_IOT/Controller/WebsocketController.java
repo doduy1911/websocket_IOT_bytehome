@@ -23,18 +23,25 @@ public class WebsocketController extends TextWebSocketHandler {
          if("REGISTER".equals(json.get("type").asText())){
              String userId = json.get("userId").asText();
              String deviceId = json.get("deviceId").asText();
-             String key = userId + deviceId;
+             String key = userId + ":" + deviceId;
              sessions.put(key, session);
-             System.out.println("Register" + key);
+             System.out.println("Register" + ":" + key);
          }
     }
 
     public void SendCommand(String userId , String deviceId,String command ) throws Exception {
         String key = userId + ":" + deviceId;
+        System.out.println(key);
+        System.out.println(sessions.keySet());
         WebSocketSession session = sessions.get(key);
+        System.out.println(session);
         if(session != null && session.isOpen()){
             ObjectMapper mapper = new ObjectMapper();
             Map<String,String> cmd = Map.of("command", command,"userId", userId,"deviceId", deviceId);
+            System.out.println(cmd);
+            System.out.println(userId);
+            System.out.println(deviceId);
+            System.out.println(command);
             session.sendMessage(new TextMessage(mapper.writeValueAsString(cmd)));
         }else {
             throw new Exception("Device not connected" + key);

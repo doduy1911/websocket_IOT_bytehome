@@ -15,7 +15,9 @@ public class DeviceController {
     }
     @PostMapping("/{userId}/device/{deviceId}/startcam")
     public ResponseEntity<String> startCamera(@PathVariable String userId, @PathVariable String deviceId) {
+        
         try{
+            // System.out.println(userId + deviceId );
             websocketController.SendCommand(userId,deviceId,"START_CAMERA");
             return ResponseEntity.ok().body("Camera start command sent");
         }catch (Exception e){
