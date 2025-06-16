@@ -9,8 +9,8 @@ import RPi.GPIO as GPIO
 # Khai báo user/device (gán cố định cho từng Pi)
 USER_ID = "u1"
 DEVICE_ID = "d1"
-SERVER_WS = "ws://your-server-ip:8080/ws"
-SERVER_API = f"http://your-server-ip:8080/stream-frames/{USER_ID}/{DEVICE_ID}"
+SERVER_WS = "ws://42.116.105.110:3000/ws"
+SERVER_API = f"http://42.116.105.110:3000/stream-frames/{USER_ID}/{DEVICE_ID}"
 
 # GPIO setup (LED pin)
 LED_PIN = 18
