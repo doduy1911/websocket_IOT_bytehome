@@ -7,8 +7,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component
 public class WebsocketController extends TextWebSocketHandler {
@@ -37,5 +39,12 @@ public class WebsocketController extends TextWebSocketHandler {
         }else {
             throw new Exception("Device not connected" + key);
         }
+    }
+
+    public List<String> getConnectedDevices() {
+        return sessions.entrySet().stream()
+                .filter(entry -> entry.getValue().isOpen())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 }

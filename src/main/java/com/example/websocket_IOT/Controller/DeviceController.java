@@ -2,10 +2,9 @@ package com.example.websocket_IOT.Controller;
 
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -22,6 +21,12 @@ public class DeviceController {
         }catch (Exception e){
             return ResponseEntity.status(500).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/connected")
+    public ResponseEntity<List<String>> getConnectedDevices() {
+        List<String> connected = websocketController.getConnectedDevices();
+        return ResponseEntity.ok(connected);
     }
 
      
