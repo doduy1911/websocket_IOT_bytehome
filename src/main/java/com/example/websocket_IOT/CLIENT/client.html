@@ -1,104 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>IoT Control Panel</title>
+    <meta charset="UTF-8">
+    <title>Điều khiển thiết bị IoT</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial;
+            text-align: center;
             padding: 20px;
+            background-color: #f0f0f0;
         }
 
-        h2 {
-            margin-bottom: 10px;
-        }
-
-        .controls {
-            margin-bottom: 20px;
-        }
-
+        input,
         button {
-            padding: 10px 20px;
-            margin-right: 10px;
-            cursor: pointer;
+            margin: 8px;
+            padding: 10px;
+            font-size: 16px;
         }
 
-        #stream {
-            border: 2px solid #ccc;
+        #video {
+            margin-top: 20px;
+            border: 1px solid black;
             width: 640px;
-            height: auto;
-        }
-
-        .status {
-            margin-top: 10px;
-            color: green;
         }
     </style>
 </head>
+
 <body>
-<h2>IoT Device Control Panel</h2>
 
-<div class="controls">
-    <label>User ID: <input type="text" id="userId" value="001" /></label>
-    <label>Device ID: <input type="text" id="deviceId" value="d1" /></label>
-    <br><br>
-    <button onclick="startCamera()">🎥 Bắt đầu Camera</button>
-    <button onclick="turnOnLight()">💡 Bật đèn</button>
-    <button onclick="turnOffLight()">💤 Tắt đèn</button>
-</div>
+    <h2>🔧 Điều khiển thiết bị IoT</h2>
 
-<h3>📡 Live Stream</h3>
-<img id="stream" src="" alt="Live Stream not started" />
+    <!-- Nhập userId và deviceId -->
+    <div>
+        <input type="text" id="userId" placeholder="Nhập User ID">
+        <input type="text" id="deviceId" placeholder="Nhập Device ID">
+    </div>
 
-<div class="status" id="status"></div>
+    <!-- Các nút gửi lệnh -->
+    <div>
+        <button onclick="sendCommand('TURN_ON_LIGHT')">💡 Bật đèn</button>
+        <button onclick="sendCommand('TURN_OFF_LIGHT')">🔌 Tắt đèn</button>
+        <button onclick="sendCommand('startcam')">📷 Bật camera</button>
+        <button onclick="sendCommand('STOP_CAMERA')">🛑 Tắt camera</button>
+    </div>
 
-<script>
-    const BASE_API = "http://42.116.105.110:3000/api";
+    <!-- Nhập lệnh tùy ý -->
+    <div>
+        <input type="text" id="customCommand" placeholder="Nhập lệnh bất kỳ">
+        <button onclick="sendCustomCommand()">📤 Gửi lệnh</button>
+    </div>
 
-    function getUserDevice() {
-        const userId = document.getElementById("userId").value;
-        const deviceId = document.getElementById("deviceId").value;
-        return { userId, deviceId };
-    }
+    <!-- Hiển thị video -->
+    <div>
+        <button onclick="loadStream()">📺 Tải video</button>
+        <br>
+        <img id="video" src="" alt="Video sẽ hiển thị ở đây">
+    </div>
 
-    async function startCamera() {
-        const { userId, deviceId } = getUserDevice();
-        try {
-            await fetch(`${BASE_API}/user/${userId}/device/${deviceId}/startcam`);
-            document.getElementById("stream").src = `${BASE_API}/stream-view/${userId}/${deviceId}`;
-            setStatus("Đã gửi lệnh mở camera.");
-        } catch (err) {
-            console.error(err);
-            setStatus("Lỗi khi gửi lệnh mở camera.");
+    <script>
+        const BASE_URL = "http://42.116.105.110:3000"; // Thay URL nếu cần
+
+        // Lấy userId và deviceId từ input
+        function getIds() {
+            const userId = document.getElementById("userId").value.trim();
+            const deviceId = document.getElementById("deviceId").value.trim();
+
+            if (!userId || !deviceId) {
+                alert("Vui lòng nhập cả User ID và Device ID!");
+                throw new Error("Thiếu ID");
+            }
+
+            return { userId, deviceId };
         }
-    }
 
-    async function turnOnLight() {
-        const { userId, deviceId } = getUserDevice();
-        try {
-            await fetch(`${BASE_API}/user/${userId}/device/${deviceId}/turnonlight`);
-            setStatus("Đã gửi lệnh bật đèn.");
-        } catch (err) {
-            console.error(err);
-            setStatus("Lỗi khi gửi lệnh bật đèn.");
+        // Gửi lệnh cố định
+        function sendCommand(command) {
+            try {
+                const { userId, deviceId } = getIds();
+                console.log(command)
+
+                fetch(`${BASE_URL}/api/user/${userId}/device/${deviceId}/${command}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ command })
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Lỗi gửi lệnh");
+                        alert("✅ Đã gửi lệnh: " + command);
+                    })
+                    .catch(err => {
+                        console.error("❌ Lỗi:", err);
+                        alert("❌ Không gửi được lệnh");
+                    });
+
+            } catch (e) {
+                console.warn("Không thể gửi lệnh:", e.message);
+            }
         }
-    }
 
-    async function turnOffLight() {
-        const { userId, deviceId } = getUserDevice();
-        try {
-            await fetch(`${BASE_API}/user/${userId}/device/${deviceId}/turnofflight`);
-            setStatus("Đã gửi lệnh tắt đèn.");
-        } catch (err) {
-            console.error(err);
-            setStatus("Lỗi khi gửi lệnh tắt đèn.");
+        // Gửi lệnh do người dùng nhập
+        function sendCustomCommand() {
+            const command = document.getElementById("customCommand").value.trim();
+            if (!command) {
+                alert("Vui lòng nhập lệnh!");
+                return;
+            }
+            sendCommand(command);
         }
-    }
 
-    function setStatus(text) {
-        document.getElementById("status").innerText = text;
-    }
-</script>
+        // Hiển thị stream
+        function loadStream() {
+            try {
+                const { userId, deviceId } = getIds();
+                const video = document.getElementById("video");
+                video.src = `${BASE_URL}/api/stream-view/${userId}/${deviceId}`;
+            } catch (e) {
+                console.warn("Không thể tải stream:", e.message);
+            }
+        }
+    </script>
+
 </body>
+
 </html>

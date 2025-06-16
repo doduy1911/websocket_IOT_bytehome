@@ -6,43 +6,31 @@ import cv2
 import requests
 from gpio_helper import GPIO  # <-- dùng module mới
 
-# Tạo đối tượng GPIO (dù là thật hay giả lập)
-gpio = GPIO()
-
-# Khai báo user/device (gán cố định cho từng Pi)
-USER_ID = "001"
+# --- Config ---
+USER_ID = "u1"
 DEVICE_ID = "d1"
 SERVER_WS = "ws://42.116.105.110:3000/ws"
 SERVER_API = f"http://42.116.105.110:3000/stream-frames/{USER_ID}/{DEVICE_ID}"
 
-# GPIO setup (LED pin)
 LED_PIN = 18
-gpio.setmode(gpio.BCM)
-gpio.setup(LED_PIN, gpio.OUT)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN, GPIO.OUT)
 
-# Hàm xử lý các command gửi về từ server
-def handle_command(cmd):
-    command = cmd.get("command")
-    print(f"[Received command]: {command}")
+# --- Globals ---
+streaming = False
+stream_thread = None
 
-    if command == "TURN_ON_LIGHT":
-        gpio.output(LED_PIN, gpio.HIGH)
-    elif command == "TURN_OFF_LIGHT":
-        gpio.output(LED_PIN, gpio.LOW)
-    elif command == "START_CAMERA":
-        start_stream()
-    else:
-        print(f"[Unknown command]: {command}")
-
-# Hàm gửi MJPEG stream từ camera
-def start_stream():
+# --- Streaming Function ---
+def stream_loop():
+    global streaming
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Cannot open camera")
+        streaming = False
         return
 
     try:
-        while True:
+        while streaming:
             ret, frame = cap.read()
             if not ret:
                 break
@@ -52,13 +40,47 @@ def start_stream():
                 'Content-Type': 'image/jpeg'
             })
 
-            time.sleep(0.1)  # Throttle frame rate
+            time.sleep(0.1)
     except Exception as e:
         print(f"[Streaming error]: {e}")
     finally:
         cap.release()
 
-# Hàm khi nhận được message WebSocket
+# --- Start / Stop streaming ---
+def start_stream():
+    global streaming, stream_thread
+    if not streaming:
+        print("[Camera] Starting stream...")
+        streaming = True
+        stream_thread = threading.Thread(target=stream_loop)
+        stream_thread.start()
+
+def stop_stream():
+    global streaming, stream_thread
+    if streaming:
+        print("[Camera] Stopping stream...")
+        streaming = False
+        if stream_thread:
+            stream_thread.join()
+            print("[Camera] Stream stopped.")
+
+# --- Handle command ---
+def handle_command(cmd):
+    command = cmd.get("command")
+    print(f"[Received command]: {command}")
+
+    if command == "TURN_ON_LIGHT":
+        GPIO.output(LED_PIN, GPIO.HIGH)
+    elif command == "TURN_OFF_LIGHT":
+        GPIO.output(LED_PIN, GPIO.LOW)
+    elif command == "START_CAMERA":
+        start_stream()
+    elif command == "STOP_CAMERA":
+        stop_stream()
+    else:
+        print(f"[Unknown command]: {command}")
+
+# --- WebSocket callbacks ---
 def on_message(ws, message):
     try:
         data = json.loads(message)
@@ -80,10 +102,11 @@ def on_error(ws, error):
 
 def on_close(ws, close_status_code, close_msg):
     print("[WebSocket Closed]")
+    stop_stream()  # đảm bảo dừng stream nếu WS bị đóng
 
-# Khởi chạy WebSocket
+# --- Main ---
 def run():
-    websocket.enableTrace(True)
+    websocket.enableTrace(False)
     ws = websocket.WebSocketApp(SERVER_WS,
                                 on_open=on_open,
                                 on_message=on_message,
@@ -97,4 +120,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Exiting...")
     finally:
-        gpio.cleanup()
+        stop_stream()
+        GPIO.cleanup()
