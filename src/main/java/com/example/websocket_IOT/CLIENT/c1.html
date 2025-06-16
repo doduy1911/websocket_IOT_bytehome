@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Điều khiển & Stream Video IoT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        button {
+            margin: 8px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        #video {
+            margin-top: 20px;
+            border: 2px solid #333;
+            width: 640px;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>🔧 Điều khiển thiết bị IoT (u1/d1)</h2>
+
+    <!-- Các nút điều khiển -->
+    <div>
+        <button onclick="sendCommand('TURN_ON_LIGHT')">💡 Bật đèn</button>
+        <button onclick="sendCommand('TURN_OFF_LIGHT')">🔌 Tắt đèn</button>
+        <button onclick="sendCommand('startcam')">📷 Bật camera</button>
+        <button onclick="sendCommand('stopcam')">🛑 Tắt camera</button>
+    </div>
+
+    <!-- Stream video -->
+    <div>
+        <button onclick="loadStream()">📺 Xem Video</button>
+        <br>
+        <img id="video" src="" alt="Video sẽ hiển thị tại đây">
+    </div>
+
+    <script>
+        const BASE_URL = "http://42.116.105.110:3000"; // Server backend của bạn
+        const userId = "u1";
+        const deviceId = "d1";
+
+        function sendCommand(command) {
+            fetch(`${BASE_URL}/api/user/${userId}/device/${deviceId}/${command}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ command })
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error("Lỗi gửi lệnh");
+                    alert("✅ Đã gửi lệnh: " + command);
+                })
+                .catch(err => {
+                    console.error("❌ Gửi lệnh lỗi:", err);
+                    alert("❌ Không gửi được lệnh");
+                });
+        }
+
+        function loadStream() {
+            const video = document.getElementById("video");
+            video.src = `${BASE_URL}/api/api/stream-views/${userId}/${deviceId}`;
+        }
+    </script>
+
+</body>
+
+</html>
