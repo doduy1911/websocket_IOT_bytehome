@@ -4,9 +4,10 @@ import json
 import time
 import cv2
 import requests
-# import RPi.GPIO as GPIO
-from RPi import GPIO
+from gpio_helper import GPIO  # <-- dùng module mới
 
+# Tạo đối tượng GPIO (dù là thật hay giả lập)
+gpio = GPIO()
 
 # Khai báo user/device (gán cố định cho từng Pi)
 USER_ID = "u1"
@@ -16,8 +17,8 @@ SERVER_API = f"http://42.116.105.110:3000/stream-frames/{USER_ID}/{DEVICE_ID}"
 
 # GPIO setup (LED pin)
 LED_PIN = 18
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(LED_PIN, GPIO.OUT)
+gpio.setmode(gpio.BCM)
+gpio.setup(LED_PIN, gpio.OUT)
 
 # Hàm xử lý các command gửi về từ server
 def handle_command(cmd):
@@ -25,9 +26,9 @@ def handle_command(cmd):
     print(f"[Received command]: {command}")
 
     if command == "TURN_ON_LIGHT":
-        GPIO.output(LED_PIN, GPIO.HIGH)
+        gpio.output(LED_PIN, gpio.HIGH)
     elif command == "TURN_OFF_LIGHT":
-        GPIO.output(LED_PIN, GPIO.LOW)
+        gpio.output(LED_PIN, gpio.LOW)
     elif command == "START_CAMERA":
         start_stream()
     else:
@@ -66,7 +67,6 @@ def on_message(ws, message):
         print(f"[Error handling message]: {e}")
 
 def on_open(ws):
-    # Gửi thông tin đăng ký khi kết nối WebSocket thành công
     register = {
         "type": "REGISTER",
         "userId": USER_ID,
@@ -97,4 +97,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Exiting...")
     finally:
-        GPIO.cleanup()
+        gpio.cleanup()
